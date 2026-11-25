@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ffc800">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="화물모의고사">
+<title>화물운송 모의고사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 차분한 시험장, 격려하는 말투
+IDEA: 노란 영업용 번호판 + CBT 시험 단말기
+PICTURE: 번호판 헤더, 실제로 움직이는 적성검사 화면
+COLOUR and TYPE: 번호판 노랑, 먹색, 흰 바탕 / Noto Sans KR
+LAYOUT: 한 칼럼, 휴대폰 우선, 하단 고정 버튼 */
+:root{color-scheme:light dark;--bg:light-dark(#fff,#131416);--ink:light-dark(#141414,#f1f1ee);--mute:light-dark(#5d5d5a,#a6a6a0);--line:light-dark(#e2e2dc,#2e3034);--card:light-dark(#f4f4ef,#1c1e21);--y:#ffc800;--yk:#141414;--ok:light-dark(#11804a,#4fd18b);--bad:light-dark(#c62828,#ff6b6b);--stage:light-dark(#e8e8e2,#24262a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Sans KR",system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+.plate{background:var(--y);color:var(--yk);padding:22px max(5vw,16px) 26px}
+.plate .in{max-width:720px;margin:0 auto}
+.plate h1{font-size:clamp(28px,7vw,40px);line-height:1.1;margin:0 0 8px;font-weight:900;text-wrap:balance}
+.plate p{margin:0;font-weight:500}
+.badge{display:inline-block;border:2.5px solid var(--yk);border-radius:10px;padding:2px 12px;font-weight:900;font-size:15px;margin-bottom:12px}
+.card{background:var(--card);border-radius:16px;padding:18px;margin:14px 0}
+.card h2{margin:0 0 4px;font-size:20px;line-height:1.3}
+.card p{margin:4px 0 12px;color:var(--mute)}
+.st{display:inline-block;font-size:13px;font-weight:700;padding:2px 10px;border-radius:99px;margin-bottom:8px}
+.st.ok{background:var(--ok);color:#fff}.st.no{background:var(--line);color:var(--ink)}
+button{font:inherit;font-weight:700;font-size:16px;min-height:48px;border-radius:12px;border:0;padding:10px 16px;cursor:pointer;color:var(--ink);background:var(--line)}
+button:focus-visible{outline:3px solid var(--y);outline-offset:2px}
+button:disabled{opacity:.4;cursor:default}
+.pri{background:var(--ink);color:var(--bg)}.yb{background:var(--y);color:var(--yk)}
+.ghost{background:transparent;border:1.5px solid var(--line)}
+.full{width:100%}.sm{min-height:40px;font-size:14px;padding:6px 12px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
+.note{font-size:13px;color:var(--mute);margin:18px 0}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:14px}
+.bar .time{font-weight:900;font-size:18px;font-variant-numeric:tabular-nums;margin-right:auto;white-space:nowrap}
+.time.low{color:var(--bad)}
+.exam{max-width:720px;margin:0 auto;padding:18px 16px 110px}
+.chip{display:inline-block;background:var(--y);color:var(--yk);font-weight:700;font-size:13px;padding:2px 10px;border-radius:6px;margin:0 0 10px}
+.qn{font-size:19px;line-height:1.5;margin:0 0 18px;font-weight:700}
+.opts{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:14px;border:1.5px solid var(--line);background:var(--bg);border-radius:12px;min-height:56px;font-weight:500;line-height:1.5}
+.opt b{flex:none;font-size:18px}
+.opt.on{border-color:var(--yk);background:var(--y);color:var(--yk)}
+.foot{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:5}
+.foot .row{max-width:720px;margin:0 auto}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:720px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto}
+.sheet h3{margin:0 0 6px;font-size:18px}
+.nums{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin:12px 0}
+.nums button{min-height:40px;padding:0;font-size:14px;background:var(--card)}
+.nums button.a{background:var(--y);color:var(--yk)}.nums button.c{outline:2px solid var(--ink)}
+.nums .sep{grid-column:1/-1;font-size:13px;color:var(--mute);margin-top:4px}
+@media(max-width:420px){.nums{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.big{font-size:clamp(44px,12vw,64px);font-weight:900;line-height:1.05;margin:6px 0}
+.meter{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0 2px}
+.meter i{display:block;height:100%;background:var(--ink)}
+.meter i.ok{background:var(--ok)}.meter i.bad{background:var(--bad)}
+.sub{display:flex;justify-content:space-between;gap:10px;font-size:15px;margin-top:12px}
+.sub span:last-child{white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums}
+.rv{border-top:1px solid var(--line);padding:14px 0}
+.rv .q{font-weight:700;margin:0 0 6px}
+.rv .me{color:var(--bad)}.rv .ans{color:var(--ok);font-weight:700}
+.rv .ex{color:var(--mute);font-size:15px;margin:4px 0 0}
+.hist{list-style:none;padding:0;margin:8px 0 0}
+.hist li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px;padding:4px 0}
+.hist .meter{margin:0}
+.stage{position:relative;height:170px;background:var(--stage);border-radius:14px;overflow:hidden;margin:14px 0}
+.road{position:absolute;left:0;right:0;bottom:52px;border-top:3px dashed var(--mute);opacity:.5}
+.tunnel{position:absolute;left:45%;width:40%;top:28px;bottom:28px;background:#2b2b2b;border-radius:60px 60px 0 0;z-index:2;border:3px solid #444}
+.mark{position:absolute;left:85%;top:2px;transform:translateX(-50%);color:var(--bad);font-size:22px;z-index:3;line-height:1}
+.stopl{position:absolute;left:80%;top:20px;bottom:20px;width:4px;background:var(--bad);z-index:2}
+.truck{position:absolute;left:0;bottom:56px;width:44px;height:26px;background:var(--y);border-radius:4px 12px 4px 4px;z-index:1;will-change:transform;box-shadow:inset -12px 0 0 rgba(0,0,0,.18)}
+.truck::after{content:"";position:absolute;left:6px;right:6px;bottom:-8px;height:8px;background:radial-gradient(circle at 6px 4px,#222 4px,transparent 5px),radial-gradient(circle at calc(100% - 6px) 4px,#222 4px,transparent 5px)}
+.hint{min-height:28px;text-align:center;font-weight:700;margin:8px 0}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.duo button,.hit{min-height:76px;font-size:20px}
+.cells{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}
+.cell{aspect-ratio:1;border:2px solid var(--line);border-radius:12px;display:grid;place-items:center;font-size:clamp(28px,9vw,44px);font-weight:900;background:var(--bg)}
+.cell.cue{border-color:var(--ink)}
+.dot{width:64px;height:64px;border-radius:50%;position:absolute;top:50%;transform:translate(-50%,-50%)}
+.shapes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;background:var(--stage);border-radius:14px;padding:14px;margin:14px 0;min-height:240px}
+.sh{aspect-ratio:1;display:grid;place-items:center}
+.sh i{display:block;width:62%;height:62%}
+.sh i.c{border-radius:50%}.sh i.t{clip-path:polygon(50% 0,100% 100%,0 100%)}
+.r{color:var(--ok);font-weight:700}.x{color:var(--bad);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}
+td:last-child,th:last-child{text-align:right;white-space:nowrap}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style></head><body>
+<div id="app"></div>
+<script>
+{
+const app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(k,d){try{const v=localStorage.getItem('fx2_'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('fx2_'+k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem('fx2_'+k)}catch(e){}}};
+const SUBJ=[{k:'L',s:'법규',n:'교통 및 화물자동차 운수사업 관련 법규',c:25},{k:'S',s:'안전운행',n:'안전운행',c:25},{k:'C',s:'화물취급요령',n:'화물취급요령',c:15},{k:'V',s:'운송서비스',n:'운송서비스',c:15}];
+const RAW={L:`
+도로교통법상 '자동차전용도로'의 뜻으로 옳은 것은?|자동차만 다닐 수 있도록 설치된 도로|고속도로와 일반도로를 연결하는 도로|화물자동차만 통행할 수 있는 도로|보행자와 자동차가 함께 다니는 도로|자동차전용도로는 자동차만 다닐 수 있도록 설치된 도로입니다.
+화물자동차 운수사업의 종류가 아닌 것은?|화물자동차 대여사업|화물자동차 운송사업|화물자동차 운송주선사업|화물자동차 운송가맹사업|운수사업은 운송사업, 운송주선사업, 운송가맹사업 세 가지입니다.
+현행 화물자동차 운송사업의 종류로 옳은 것은?|일반화물자동차 운송사업, 개인화물자동차 운송사업|일반·용달·개별화물자동차 운송사업|일반·택배화물자동차 운송사업|법인·개인·용달화물자동차 운송사업|제도 개편으로 일반과 개인 두 종류로 정리되었습니다.
+편도 3차로 이상 고속도로에서 화물자동차가 통행할 차로는?|오른쪽 차로|왼쪽 차로|1차로|모든 차로를 자유롭게|왼쪽 차로는 승용·경형·소형·중형 승합, 오른쪽 차로는 대형 승합·화물·특수·건설기계가 통행합니다.
+황색 등화의 점멸이 뜻하는 것은?|다른 교통 또는 안전표지에 주의하면서 진행할 수 있다|정지선 직전에 일시정지한 후 진행한다|진행할 수 없다|우회전만 할 수 있다|황색 점멸은 주의하며 진행, 적색 점멸은 일시정지 후 진행입니다.
+적색 등화의 점멸이 뜻하는 것은?|정지선이나 횡단보도 직전에 일시정지한 후 다른 교통에 주의하면서 진행할 수 있다|주의하면서 서행으로 진행할 수 있다|절대 진행할 수 없다|좌회전만 할 수 있다|적색 점멸은 반드시 일시정지한 뒤 주의하며 진행합니다.
+도로교통법상 서행해야 할 장소가 아닌 것은?|교통정리를 하고 있는 교차로|도로가 구부러진 부근|비탈길의 고갯마루 부근|가파른 비탈길의 내리막|서행 장소는 '교통정리를 하고 있지 않은' 교차로입니다.
+도로교통법상 일시정지해야 할 장소는?|교통정리가 없고 좌우를 확인할 수 없거나 교통이 빈번한 교차로|도로가 구부러진 부근|비탈길의 고갯마루 부근|가파른 비탈길의 내리막|나머지 보기는 서행해야 할 장소입니다.
+앞지르기 금지 장소가 아닌 것은?|편도 2차로 직선 도로|교차로|터널 안|다리 위|교차로, 터널 안, 다리 위, 구부러진 곳, 비탈길 고갯마루 부근 등은 앞지르기 금지 장소입니다.
+교차로의 가장자리나 도로의 모퉁이로부터 몇 m 이내에 정차·주차가 금지되는가?|5m|3m|10m|15m|교차로 가장자리·도로 모퉁이로부터 5m 이내는 정차·주차 금지입니다.
+횡단보도로부터 몇 m 이내에 정차·주차가 금지되는가?|10m|5m|3m|20m|횡단보도로부터 10m 이내는 정차·주차 금지입니다.
+도로교통법상 주차금지 장소에 해당하는 것은?|터널 안 및 다리 위|노상주차장의 주차구획 안|편도 3차로 도로의 주차 허용 구역|일방통행로의 주차구획 안|터널 안과 다리 위는 주차금지 장소입니다.
+제1종 보통면허로 운전할 수 있는 화물자동차는?|적재중량 12톤 미만의 화물자동차|적재중량 12톤 이상의 화물자동차|모든 특수자동차|대형 견인차|1종 보통면허는 적재중량 12톤 미만 화물자동차를 운전할 수 있습니다.
+제2종 보통면허로 운전할 수 있는 화물자동차는?|적재중량 4톤 이하의 화물자동차|적재중량 12톤 미만의 화물자동차|적재중량 5톤 이하의 화물자동차|적재중량 1톤 이하의 화물자동차만|2종 보통면허는 적재중량 4톤 이하 화물자동차까지 가능합니다.
+운전이 금지되는 술에 취한 상태의 기준은?|혈중알코올농도 0.03% 이상|혈중알코올농도 0.05% 이상|혈중알코올농도 0.08% 이상|혈중알코올농도 0.1% 이상|혈중알코올농도 0.03% 이상이면 술에 취한 상태입니다.
+1년간 누산 벌점이 몇 점 이상이면 운전면허가 취소되는가?|121점|101점|150점|201점|1년 121점, 2년 201점, 3년 271점 이상이면 취소됩니다.
+화물이 인도기한이 지난 후 몇 개월 이내에 인도되지 않으면 멸실된 것으로 보는가?|3개월|1개월|6개월|1년|인도기한 경과 후 3개월 이내 인도되지 않으면 멸실로 봅니다.
+적재물배상책임보험은 사고 건당 얼마 이상을 보상하도록 가입해야 하는가?|2천만원|1천만원|5천만원|1억원|사고 건당 2천만원 이상입니다.
+적재물배상책임보험 의무 가입 대상 화물자동차의 최대적재량 기준은?|5톤 이상|1톤 이상|2.5톤 이상|10톤 이상|최대적재량 5톤 이상(또는 총중량 10톤 이상)인 일반형·밴형·특수용도형 화물자동차가 대상입니다.
+화물자동차 규모별 '소형'의 기준은?|최대적재량 1톤 이하이고 총중량 3.5톤 이하|최대적재량 0.5톤 이하|최대적재량 1톤 초과 5톤 미만|최대적재량 5톤 이상|소형은 최대적재량 1톤 이하, 총중량 3.5톤 이하입니다.
+화물자동차 규모별 '대형'의 기준은?|최대적재량 5톤 이상이거나 총중량 10톤 이상|최대적재량 1톤 이상|총중량 3.5톤 이상|최대적재량 12톤 이상|대형은 최대적재량 5톤 이상 또는 총중량 10톤 이상입니다.
+자동차관리법상 자동차의 종류가 아닌 것은?|건설기계|승용자동차|승합자동차|화물자동차|자동차관리법상 종류는 승용·승합·화물·특수·이륜자동차입니다.
+도로법상 운행이 제한되는 차량의 축하중 기준은?|10톤 초과|5톤 초과|15톤 초과|20톤 초과|축하중 10톤 초과 차량은 운행이 제한됩니다.
+도로법상 운행이 제한되는 차량의 총중량 기준은?|40톤 초과|30톤 초과|20톤 초과|50톤 초과|총중량 40톤 초과 차량은 운행이 제한됩니다.
+도로법상 운행이 제한되는 차량의 폭 기준은?|2.5m 초과|2.0m 초과|3.0m 초과|3.5m 초과|차량 폭 2.5m 초과는 운행 제한 대상입니다.
+도로법상 운행이 제한되는 차량의 길이 기준은?|16.7m 초과|12m 초과|15m 초과|20m 초과|길이 16.7m 초과는 운행 제한 대상입니다.
+화물자동차 적재 높이의 일반 기준은?|지상으로부터 4m|지상으로부터 3.5m|지상으로부터 4.5m|지상으로부터 5m|일반 기준은 지상 4m이며 도로구조 보전에 지장이 없다고 인정된 도로는 4.2m입니다.
+화물자동차 적재 길이의 기준은?|자동차 길이에 그 길이의 10분의 1을 더한 길이|자동차 길이에 그 길이의 5분의 1을 더한 길이|자동차 길이에 그 길이의 2분의 1을 더한 길이|자동차 길이 그대로|적재 길이는 자동차 길이의 10분의 1을 더한 길이를 넘을 수 없습니다.
+화물자동차 운전자의 연속 운전 후 휴게시간 기준은?|4시간 연속 운전 후 30분 이상|2시간 연속 운전 후 15분 이상|3시간 연속 운전 후 20분 이상|6시간 연속 운전 후 1시간 이상|4시간 연속 운전하면 30분 이상 쉬어야 합니다.
+교통사고처리특례법상 12대 중과실에 해당하지 않는 것은?|제한속도를 시속 10km 초과한 과속|신호위반|중앙선 침범|무면허 운전|과속은 제한속도를 시속 20km 초과한 경우가 중과실입니다.
+교통사고처리특례법상 12대 중과실에 해당하는 것은?|화물 고정조치 위반|안전거리 미확보|경음기 사용 위반|진로변경 신호 불이행|화물이 떨어지지 않게 고정하지 않은 것은 12대 중과실입니다.
+어린이 보호구역에서 자동차 통행속도는 일반적으로 시속 몇 km 이내로 제한되는가?|30km|20km|40km|50km|어린이 보호구역은 보통 시속 30km 이내로 제한됩니다.
+교차로 또는 그 부근에서 긴급자동차가 접근할 때 운전자의 조치는?|교차로를 피하여 일시정지한다|그 자리에서 즉시 정지한다|가속하여 교차로를 빠르게 통과한다|중앙선 쪽으로 붙어 진로를 비켜준다|교차로나 그 부근에서는 교차로를 피해 일시정지합니다.
+편도 2차로 이상 고속도로에서 적재중량 1.5톤 초과 화물자동차의 최고속도는?|매시 80km|매시 90km|매시 100km|매시 110km|적재중량 1.5톤 초과 화물자동차는 매시 80km입니다.
+편도 2차로 이상 고속도로의 최저속도는?|매시 50km|매시 30km|매시 40km|매시 60km|고속도로 최저속도는 매시 50km입니다.
+비가 내려 노면이 젖어 있을 때 감속해야 하는 속도는?|최고속도의 100분의 20을 줄인 속도|최고속도의 100분의 50을 줄인 속도|최고속도의 100분의 10을 줄인 속도|감속할 필요 없음|노면이 젖은 경우 20/100 감속입니다.
+폭우·폭설·안개 등으로 가시거리가 100m 이내일 때 감속 기준은?|최고속도의 100분의 50을 줄인 속도|최고속도의 100분의 20을 줄인 속도|최고속도의 100분의 30을 줄인 속도|감속할 필요 없음|가시거리 100m 이내, 노면 결빙, 눈 20mm 이상이면 50/100 감속입니다.
+화물운송 종사자격을 반드시 취소해야 하는 경우는?|거짓이나 부정한 방법으로 자격을 취득한 경우|교통법규 위반으로 범칙금을 낸 경우|차량 정기점검을 하루 늦은 경우|운송 중 고객과 언쟁한 경우|부정 취득은 반드시 취소 사유입니다.
+고속도로에서 진로를 바꾸려 할 때 신호를 해야 하는 시기는?|바꾸려는 지점에 이르기 전 100m 이상의 지점|바꾸려는 지점 30m 전|바꾸려는 지점 50m 전|바꾸려는 지점에 도착했을 때|고속도로는 100m 이상, 일반도로는 30m 이상 전에 신호합니다.
+일반도로에서 좌·우회전할 때 신호를 해야 하는 시기는?|그 행위를 하려는 지점에 이르기 전 30m 이상의 지점|10m 이상 전|100m 이상 전|교차로 안에 들어간 뒤|일반도로에서는 30m 이상 전에 신호합니다.
+철길 건널목을 통과하는 방법으로 옳은 것은?|건널목 앞에서 일시정지하여 안전을 확인한 후 통과한다|서행하며 그대로 통과한다|경보기가 울려도 차단기가 내려오기 전이면 빨리 통과한다|앞차를 바짝 따라 함께 통과한다|건널목 앞에서는 일시정지하고 안전을 확인합니다(신호기 지시에 따르는 경우 제외).
+'안전거리'의 뜻으로 옳은 것은?|앞차가 갑자기 정지할 때 충돌을 피할 수 있는 거리|앞차와 항상 10m 이상의 거리|차 길이의 2배 거리|속도 수치의 절반 미터|앞차가 갑자기 멈춰도 충돌을 피할 수 있는 필요한 거리입니다.
+운전 중 휴대전화를 사용할 수 있는 경우는?|자동차가 정지하고 있는 경우|시속 20km 이하로 달릴 때|고속도로를 달릴 때|짧게 통화할 때|정지 중, 긴급자동차 운전, 긴급 신고 등 예외에만 허용됩니다.
+'서행'의 뜻으로 옳은 것은?|운전자가 차를 즉시 정지시킬 수 있는 정도의 느린 속도로 진행하는 것|시속 10km 이하로 진행하는 것|최저속도로 진행하는 것|바퀴를 완전히 멈추는 것|서행은 즉시 정지할 수 있는 느린 속도로 가는 것입니다.
+'일시정지'의 뜻으로 옳은 것은?|차의 바퀴를 일시적으로 완전히 정지시키는 것|즉시 정지할 수 있는 속도로 가는 것|5분 이내로 차를 세우는 것|엔진을 끄는 것|일시정지는 바퀴를 잠깐 완전히 멈추는 것입니다.
+'정차'의 뜻으로 옳은 것은?|5분을 초과하지 않고 차를 정지시키는 것으로 주차 외의 정지 상태|10분 이내로 차를 세우는 것|3분 이내로 차를 세우는 것|운전자가 차를 떠나 즉시 운전할 수 없는 상태|운전자가 차를 떠난 상태 등은 주차입니다.
+다른 차를 앞지르려 할 때의 방법은?|앞차의 왼쪽으로 통행한다|앞차의 오른쪽으로 통행한다|갓길로 통행한다|어느 쪽이든 편한 쪽으로 한다|앞지르기는 앞차의 좌측으로 합니다.
+교차로에서 우회전하는 방법은?|미리 도로의 우측 가장자리를 서행하면서 우회전한다|중앙선을 따라 우회전한다|속도를 높여 빠르게 우회전한다|교차로 중심 안쪽을 이용한다|우회전은 우측 가장자리를 서행하며 합니다.
+교차로에서 좌회전하는 방법은?|미리 도로의 중앙선을 따라 서행하면서 교차로의 중심 안쪽을 이용한다|교차로의 바깥쪽으로 크게 돈다|우측 가장자리에서 바로 좌회전한다|속도를 높여 빠르게 돈다|좌회전은 중앙선을 따라 서행하며 교차로 중심 안쪽을 이용합니다.
+교통안전법상 운행기록장치의 운행기록 보관 기간은?|6개월|1개월|3개월|1년|운행기록은 6개월간 보관해야 합니다.
+화물운송 종사자격 시험 합격 후 자격 취득을 위해 받아야 하는 교육 시간은?|8시간|4시간|16시간|24시간|합격 후 8시간의 교육을 받아야 자격증이 발급됩니다.
+`,S:`
+운전 과정(인지-판단-조작) 중 교통사고 원인으로 가장 많은 것은?|인지 과정의 결함|판단 과정의 결함|조작 과정의 결함|차량 정비 결함|위험을 늦게 알아차리는 인지 결함이 가장 많습니다.
+정지거리를 바르게 나타낸 것은?|공주거리 + 제동거리|제동거리 - 공주거리|공주거리만|제동거리만|정지거리 = 공주거리 + 제동거리입니다.
+'공주거리'의 뜻으로 옳은 것은?|위험을 인지하고 브레이크가 작동하기 시작할 때까지 이동한 거리|브레이크가 작동해서 완전히 정지할 때까지의 거리|차가 미끄러진 거리|앞차와의 간격|공주거리는 반응하는 동안 그냥 달린 거리입니다.
+'베이퍼 록' 현상의 설명으로 옳은 것은?|긴 내리막에서 풋 브레이크를 과다 사용해 브레이크액에 기포가 생겨 제동이 잘 안 되는 현상|비 오는 날 타이어가 물 위에 뜨는 현상|고속 주행 시 타이어가 물결 모양으로 변형되는 현상|오래 주차 후 브레이크 드럼에 녹이 스는 현상|브레이크액이 끓어 기포가 생기는 현상입니다.
+베이퍼 록을 예방하는 방법은?|엔진 브레이크를 사용해 풋 브레이크 사용을 줄인다|기어를 중립에 둔다|풋 브레이크를 계속 밟는다|타이어 공기압을 낮춘다|긴 내리막에서는 저단 기어와 엔진 브레이크를 씁니다.
+'페이드' 현상의 설명으로 옳은 것은?|브레이크를 반복 사용해 마찰열로 라이닝 마찰력이 떨어져 제동이 잘 안 되는 현상|타이어가 물결 모양으로 변형되는 현상|핸들이 떨리는 현상|엔진이 과열되는 현상|마찰열 때문에 브레이크가 잘 듣지 않는 현상입니다.
+'수막현상(하이드로플레이닝)'의 설명은?|비 오는 날 고속 주행 시 타이어와 노면 사이에 물막이 생겨 미끄러지는 현상|브레이크액에 기포가 생기는 현상|타이어 접지부가 물결 모양으로 변형되는 현상|야간에 보행자가 보이지 않는 현상|물막 위를 미끄러져 핸들·브레이크가 잘 듣지 않습니다.
+수막현상 예방 방법이 아닌 것은?|타이어 공기압을 평소보다 낮춘다|속도를 줄인다|마모된 타이어를 교체한다|배수 성능이 좋은 타이어를 쓴다|공기압은 평소보다 조금 높여야 합니다.
+'스탠딩 웨이브' 현상의 설명은?|고속 주행 시 타이어 접지부 뒤쪽이 물결 모양으로 변형되는 현상|비 오는 날 타이어가 미끄러지는 현상|브레이크가 과열되는 현상|핸들이 무거워지는 현상|공기압이 부족한 상태로 고속 주행할 때 생깁니다.
+스탠딩 웨이브 예방 방법은?|속도를 낮추고 타이어 공기압을 적정보다 약간 높인다|타이어 공기압을 낮춘다|속도를 높인다|브레이크를 자주 밟는다|감속과 공기압 보충이 예방법입니다.
+'모닝 록' 현상의 설명은?|습한 날 오래 주차 후 브레이크 드럼에 녹이 생겨 처음 제동 시 평소보다 급제동되는 현상|아침에 시동이 잘 안 걸리는 현상|아침 안개로 시야가 막히는 현상|타이어가 얼어붙는 현상|출발 후 브레이크를 몇 번 가볍게 밟아 녹을 없애고 운행합니다.
+'내륜차'의 뜻으로 옳은 것은?|핸들을 돌렸을 때 앞바퀴 안쪽 궤적과 뒷바퀴 안쪽 궤적의 차이|앞바퀴 바깥쪽과 뒷바퀴 바깥쪽 궤적의 차이|좌우 바퀴의 회전수 차이|앞뒤 바퀴의 크기 차이|바깥쪽 차이는 외륜차입니다. 대형차일수록 내륜차가 큽니다.
+대형 화물차가 우회전할 때 특히 주의할 점은?|내륜차 때문에 뒷바퀴 안쪽의 보행자·이륜차와 부딪칠 수 있다|앞바퀴 바깥쪽만 보면 된다|빠르게 회전하면 내륜차가 없어진다|우회전 시에는 주의할 것이 없다|뒷바퀴가 안쪽으로 더 들어오므로 안쪽을 잘 살펴야 합니다.
+'증발현상'의 설명으로 옳은 것은?|야간에 마주 오는 차들의 전조등 빛 사이에서 보행자가 보이지 않는 현상|비 온 뒤 노면의 물이 증발하는 현상|브레이크액이 증발하는 현상|더운 날 연료가 증발하는 현상|양쪽 불빛이 겹치는 곳의 사람이 사라진 것처럼 보입니다.
+야간에 마주 오는 차의 전조등에 눈이 부실 때 대처 방법은?|전조등을 직접 보지 말고 도로 오른쪽 가장자리 쪽을 본다|상향등을 켜서 맞선다|잠시 눈을 감는다|속도를 높여 빨리 지나간다|시선을 오른쪽 아래로 돌려 현혹을 줄입니다.
+속도가 빨라질 때 운전자의 시야는?|좁아진다|넓어진다|변화가 없다|가까운 곳이 더 잘 보인다|속도가 빠를수록 시야가 좁아지고 먼 곳을 보게 됩니다.
+'동체시력'에 대한 설명으로 옳은 것은?|속도가 빨라질수록 떨어진다|속도가 빨라질수록 좋아진다|속도와 관계없다|나이가 들수록 좋아진다|움직이며 보는 시력은 속도가 빠를수록, 나이가 많을수록 떨어집니다.
+야간 운전 중 마주 오는 차가 있을 때 전조등 조작은?|하향으로 바꾼다|상향을 유지한다|전조등을 끈다|비상등을 켠다|상대 운전자의 눈부심을 막기 위해 하향등을 씁니다.
+안개 낀 도로를 운전하는 방법으로 옳은 것은?|전조등·안개등을 켜고 속도를 줄이며 차간거리를 충분히 둔다|상향등을 켜고 평소 속도로 달린다|앞차를 바짝 따라간다|비상등만 켜고 정속 주행한다|안개 속 상향등은 빛이 퍼져 오히려 안 보입니다.
+커브길 운전 방법으로 옳은 것은?|커브 진입 전에 속도를 줄이고 커브 중에는 급핸들·급브레이크를 피한다|커브 중에 급제동한다|중앙선 쪽으로 붙어 돈다|커브 중에 기어를 중립에 둔다|감속은 커브에 들어가기 전에 끝내야 합니다.
+긴 내리막길을 내려가는 방법으로 옳은 것은?|저단 기어로 엔진 브레이크를 활용한다|기어를 중립에 두고 내려간다|시동을 끄고 내려간다|풋 브레이크만 계속 밟는다|중립이나 풋 브레이크 과다 사용은 베이퍼 록·페이드의 원인이 됩니다.
+눈길에서 출발하는 방법으로 옳은 것은?|2단 기어로 천천히 출발한다|1단 기어로 급가속한다|가장 높은 기어로 출발한다|핸들을 꺾은 채 출발한다|바퀴가 헛돌지 않게 2단으로 부드럽게 출발합니다.
+고속도로에서 차가 고장 났을 때의 조치로 옳은 것은?|비상등을 켜고 안전삼각대를 설치한 뒤 사람은 가드레일 밖 안전한 곳으로 대피한다|차 안에서 구조를 기다린다|차 뒤에 서서 수신호를 한다|차로에 세운 채 직접 수리한다|2차 사고를 막기 위해 사람은 반드시 차로 밖으로 대피합니다.
+야간에 고속도로에서 고장으로 멈췄을 때 안전삼각대와 함께 설치해야 하는 것은?|사방 500m에서 식별할 수 있는 적색 섬광신호·전기제등 또는 불꽃신호|사방 100m에서 보이는 손전등|사방 200m에서 보이는 반사판|사방 1km에서 보이는 경광등|야간에는 사방 500m에서 보이는 신호를 추가로 설치합니다.
+터널 안에서 화재가 났을 때 운전자의 행동으로 옳은 것은?|차를 갓길에 세우고 엔진을 끈 뒤 키를 꽂아둔 채 대피한다|키를 가지고 차 문을 잠근 뒤 대피한다|차 안에서 창문을 닫고 기다린다|후진해서 터널을 빠져나간다|키를 두고 가야 소방대가 차를 옮길 수 있습니다.
+타이어 트레드 홈 깊이의 사용 한계는?|1.6mm|3mm|0.5mm|5mm|트레드 깊이가 1.6mm 이하면 교체해야 합니다.
+엔진 과열(오버히트)의 주된 원인은?|냉각수 부족|타이어 공기압 과다|연료가 가득 찬 상태|와이퍼 고무 마모|냉각수 부족, 팬벨트 느슨함 등이 원인입니다.
+휠 밸런스 불량 등으로 주행 중 핸들이 떨리는 현상은?|시미 현상|베이퍼 록|모닝 록|스탠딩 웨이브|핸들 떨림은 시미 현상입니다.
+'방어운전'의 뜻으로 가장 알맞은 것은?|다른 운전자나 보행자의 행동을 예측하고 미리 대비하는 운전|내 차로를 끝까지 지키는 운전|빠르게 위험 구간을 벗어나는 운전|경음기로 위험을 알리는 운전|상대의 실수까지 예상하고 대비하는 운전입니다.
+다른 차가 나를 앞지르려 할 때의 올바른 운전은?|속도를 줄이거나 유지하여 앞지르기를 방해하지 않는다|속도를 높여 못 앞지르게 한다|차로 가운데로 붙는다|경음기를 울린다|앞지르기를 방해하면 안 됩니다.
+운전 중 졸음이 올 때 가장 바람직한 행동은?|안전한 곳에 차를 세우고 휴식한다|창문을 닫고 히터를 켠다|속도를 높여 빨리 도착한다|음악 소리를 최대로 키운다|졸음운전은 쉬는 것 말고 해결책이 없습니다.
+철길 건널목 안에서 차가 고장 났을 때 가장 먼저 할 일은?|승객을 즉시 대피시키고 철도공무원에게 알린다|차 안에서 수리를 시도한다|경음기를 계속 울린다|보험사에 먼저 전화한다|사람 대피가 최우선이고, 이후 차를 건널목 밖으로 옮깁니다.
+운행 전 차량을 점검할 때 올바른 방법은?|경사가 없는 평탄한 곳에서 점검한다|경사진 곳에서 점검한다|엔진이 돌고 있을 때 손을 넣어 점검한다|주차 브레이크를 풀고 점검한다|차가 움직이지 않게 평지에서 점검합니다.
+터널에 들어갈 때의 운전 방법은?|전조등을 켜고 속도를 줄인다|선글라스를 쓴다|차로를 바꿔 앞지른다|비상등만 켠다|터널 입구에서는 눈이 어둠에 적응할 시간이 필요합니다.
+빗길에서의 운전 방법으로 옳은 것은?|제동거리가 길어지므로 차간거리를 평소보다 늘린다|평소와 같은 차간거리를 유지한다|급제동으로 속도를 줄인다|물웅덩이를 빠르게 통과한다|젖은 노면은 제동거리가 길어집니다.
+화물차의 사각지대에 대한 설명으로 옳은 것은?|차체가 큰 대형 화물차일수록 사각지대가 넓다|대형차일수록 사각지대가 좁다|사각지대는 차 앞쪽에만 있다|거울만 잘 맞추면 사각지대가 없다|대형차는 앞·옆·뒤 모두 사각지대가 넓습니다.
+차로를 바꿀 때 올바른 방법은?|방향지시등을 켜고 거울과 사각지대를 확인한 뒤 천천히 바꾼다|신호 없이 빠르게 바꾼다|여러 차로를 한 번에 바꾼다|뒤차가 가까워도 바로 바꾼다|신호-확인-천천히 이동이 기본입니다.
+주행 중 브레이크가 고장 났을 때의 조치로 알맞은 것은?|저단 기어로 바꿔 엔진 브레이크를 쓰고 주차 브레이크를 서서히 당긴다|시동을 끈다|기어를 중립에 둔다|핸들을 급하게 꺾는다|시동을 끄면 핸들이 무거워져 더 위험합니다.
+주행 중 타이어가 펑크 났을 때의 조치는?|핸들을 꽉 잡고 직진을 유지하며 서서히 감속한다|즉시 급브레이크를 밟는다|핸들을 반대로 크게 꺾는다|가속하여 갓길로 빠진다|급제동하면 차가 한쪽으로 쏠립니다.
+차의 뒷부분이 미끄러질 때 핸들 조작은?|미끄러지는 방향으로 핸들을 돌린다|미끄러지는 반대 방향으로 크게 돌린다|핸들을 놓는다|급제동한다|미끄러지는 쪽으로 핸들을 돌려 자세를 바로잡습니다.
+'엔진 브레이크'의 뜻으로 옳은 것은?|가속페달을 놓아 엔진의 회전 저항으로 속도를 줄이는 것|주차 브레이크를 당기는 것|풋 브레이크를 세게 밟는 것|시동을 끄고 멈추는 것|저단 기어일수록 엔진 브레이크 효과가 큽니다.
+점멸등을 켜고 정차 중인 어린이 통학버스 옆을 지날 때의 방법은?|통학버스에 이르기 전에 일시정지하여 안전을 확인한 후 서행한다|그대로 앞지른다|경음기를 울리며 지나간다|속도를 높여 빨리 지나간다|어린이 승하차 중에는 일시정지 후 서행합니다.
+화물의 무게중심이 높을 때 위험한 점은?|커브길에서 전복될 위험이 커진다|제동거리가 짧아진다|연비가 좋아진다|핸들이 가벼워진다|무게중심이 높으면 원심력으로 넘어지기 쉽습니다.
+화물차가 후진할 때 올바른 방법은?|유도자의 신호에 따라 뒤쪽을 확인하며 천천히 후진한다|거울만 보고 빠르게 후진한다|경음기를 울리며 바로 후진한다|창문을 닫고 후진한다|대형차는 뒤가 잘 안 보이므로 유도자를 둡니다.
+블랙아이스(도로 살얼음)가 생기기 쉬운 곳은?|다리 위, 터널 출입구, 그늘진 도로|햇볕이 잘 드는 직선 도로|도심의 넓은 교차로|주유소 안|다리 위와 그늘은 기온이 낮아 잘 업니다.
+피로가 운전에 주는 영향으로 옳은 것은?|주의력과 판단력이 떨어지고 반응이 늦어진다|반응 속도가 빨라진다|시야가 넓어진다|운전에 아무 영향이 없다|피로는 반응 시간을 늘립니다.
+운전 중 시선 처리로 바람직한 것은?|먼 곳까지 넓게 보며 주변을 골고루 살핀다|바로 앞차 범퍼만 본다|계기판을 자주 오래 본다|한 곳만 집중해서 본다|넓게 보면 위험을 빨리 알아챌 수 있습니다.
+정체 구간 끝에서 추돌 사고를 막는 방법은?|미리 감속하고 비상등을 켜서 뒤차에 알린다|정체 직전까지 속도를 유지한다|갓길로 빠져 정체를 피한다|앞차 바로 뒤에서 급정지한다|뒤차에 정체를 알리는 것이 중요합니다.
+`,C:`
+화물을 적재하는 방법으로 옳은 것은?|무거운 화물은 아래에, 가벼운 화물은 위에 싣는다|가벼운 화물을 아래에 싣는다|무게와 관계없이 싣는다|무거운 화물을 한쪽으로 몰아 싣는다|무게중심을 낮게 해야 안전합니다.
+적재함에 화물을 싣는 방법으로 옳은 것은?|적재함 가운데부터 좌우로 싣고 한쪽으로 치우치지 않게 한다|뒤쪽부터 꽉 채운다|한쪽 벽에 붙여서만 싣는다|앞쪽에 무게를 몰아 싣는다|무게가 한쪽으로 쏠리면 전복·제동 불량의 원인이 됩니다.
+물건을 들어 올리는 올바른 자세는?|허리를 곧게 펴고 무릎을 굽혀 다리 힘으로 든다|무릎을 편 채 허리를 굽혀 든다|몸에서 멀리 떨어뜨려 든다|허리를 비틀며 든다|허리 부상을 막으려면 다리 힘을 씁니다.
+파렛트 화물에 열수축성 플라스틱 필름을 씌우고 가열해 고정하는 방식은?|슈링크 방식|스트레치 방식|밴드걸기 방식|풀붙이기 방식|열로 필름을 수축시키는 것이 슈링크 방식입니다.
+스트레치 포장기로 플라스틱 필름을 감아 파렛트 화물을 고정하는 방식은?|스트레치 방식|슈링크 방식|주연어프 방식|박스 테두리 방식|필름을 늘려 감는 것이 스트레치 방식입니다.
+포장의 종류 중 물품 하나하나를 포장한 것은?|개장|내장|외장|겉포장|개장은 낱개 포장, 내장은 속포장, 외장은 겉포장입니다.
+포장의 종류 중 '외장'의 설명으로 옳은 것은?|화물 바깥쪽을 상자·포대 등으로 싼 포장|물품 하나하나의 포장|화물 내부의 완충 포장|포장하지 않은 상태|외장은 겉포장입니다.
+'세미 트레일러'의 설명으로 옳은 것은?|적재물 무게의 일부를 트랙터가 부담하는 트레일러|무게 전부를 트레일러가 지탱하는 트레일러|통나무 같은 긴 화물 전용 트레일러|트랙터 없이 다니는 트레일러|세미 트레일러는 앞부분 하중을 트랙터가 받칩니다.
+기둥·통나무처럼 긴 화물을 운반하는 데 쓰는 트레일러는?|폴 트레일러|세미 트레일러|풀 트레일러|돌리|장척물은 폴 트레일러로 운반합니다.
+'풀 트레일러'의 설명으로 옳은 것은?|트랙터가 하중을 부담하지 않고 트레일러 자체로 무게를 지탱한다|트랙터가 하중의 대부분을 부담한다|긴 화물 전용이다|바퀴가 없다|풀 트레일러는 트레일러가 스스로 하중을 지탱합니다.
+화물을 내릴 때의 올바른 방법은?|높은 곳에서 던지거나 굴리지 않고 조심해서 내린다|빨리 내리기 위해 던진다|굴려서 내린다|한 번에 많이 끌어내린다|충격으로 화물이 파손될 수 있습니다.
+적재한 화물을 고정하는 방법으로 옳은 것은?|로프·밴드·체인 등으로 단단히 묶어 고정한다|무게가 있으니 그냥 둔다|천막만 덮는다|가까운 거리는 고정하지 않는다|고정하지 않으면 떨어져 사고가 납니다.
+비가 올 때 화물 운송 방법으로 옳은 것은?|방수 덮개를 씌우고 단단히 묶는다|덮개 없이 빨리 운행한다|화물을 적재함 밖으로 뺀다|비가 그칠 때까지 아무 조치 없이 기다린다|젖으면 안 되는 화물은 방수 덮개로 보호합니다.
+화물을 인수할 때 확인할 사항으로 옳은 것은?|포장 상태와 수량이 운송장 기재 내용과 맞는지 확인한다|운송장만 받고 바로 출발한다|수량은 확인하지 않는다|포장이 찢어져도 그냥 받는다|인수 때 확인해야 나중에 분쟁이 없습니다.
+수하인이 아닌 대리인에게 화물을 인계할 때 올바른 방법은?|인수자의 서명을 받고 수하인과의 관계를 확인한다|아무에게나 맡긴다|문 앞에 두고 간다|서명 없이 전달한다|대리 인계 시 인수자와 관계를 확인해야 합니다.
+위험물을 운송할 때 올바른 것은?|위험물 표지를 붙이고 취급 주의사항을 지킨다|일반 화물과 같이 취급한다|표지는 붙이지 않는다|담배를 피우며 하역한다|위험물은 표지와 취급 규정을 지켜야 합니다.
+파렛트 화물의 붕괴 방지 방식이 아닌 것은?|무게 편중 방식|밴드걸기 방식|슈링크 방식|스트레치 방식|밴드걸기·슈링크·스트레치·풀붙이기 등이 붕괴 방지 방식입니다.
+드럼통처럼 둥근 화물을 실을 때 방법은?|굴러가지 않도록 쐐기 등으로 고정한다|그냥 세워 둔다|굴려서 적재함 끝에 둔다|고정하지 않고 덮개만 덮는다|원통형은 굴러가지 않게 고정합니다.
+냉동·냉장 화물 운송 시 주의할 점은?|적정 온도를 유지하고 문 여닫는 것을 줄인다|온도는 신경 쓰지 않는다|문을 열어 환기한다|냉동기를 꺼 둔다|온도가 바뀌면 화물이 상합니다.
+무거운 화물을 손으로 옮길 때 바람직한 것은?|무리하게 혼자 들지 말고 여러 사람이 함께 든다|혼자 빨리 든다|허리를 굽혀 혼자 든다|던져서 옮긴다|무게가 많이 나가면 협동 작업을 합니다.
+출발 전 화물에 대해 할 일은?|적재 상태와 결박 상태를 다시 확인한다|바로 출발한다|운송장만 다시 본다|적재함 문을 열어 둔다|출발 전 마지막 확인이 중요합니다.
+장거리 운행 중 쉴 때 할 일로 바람직한 것은?|화물의 결박 상태를 다시 점검한다|화물은 신경 쓰지 않는다|결박을 풀어 둔다|덮개를 걷어 둔다|운행 중 진동으로 결박이 느슨해질 수 있습니다.
+과적의 위험으로 옳지 않은 것은?|연비가 좋아진다|제동거리가 길어진다|타이어가 손상된다|전복 위험이 커진다|과적은 제동·조향·타이어 모두에 나쁩니다.
+지게차로 화물을 하역할 때 올바른 방법은?|포크를 화물 아래 깊숙이 넣고 안정 상태를 확인한다|포크를 끝에만 걸친다|화물을 높이 든 채 빠르게 이동한다|사람을 포크 위에 태운다|화물이 떨어지지 않게 깊이 넣어야 합니다.
+포장의 기본 기능으로 옳은 것은?|내용물을 보호한다|무게를 늘린다|운송비를 올린다|화물을 숨긴다|포장은 보호, 취급 편리, 판매 촉진 등의 기능이 있습니다.
+운송장의 기능이 아닌 것은?|화물의 소유권 증명|운송 계약서 기능|화물 인수증 기능|운송요금 영수증 기능|운송장은 계약서·인수증·영수증·정보처리 자료 등으로 쓰입니다.
+'깨지기 쉬움' 표시가 있는 화물의 취급 방법은?|충격을 주지 않게 조심히 다루고 위에 무거운 물건을 올리지 않는다|다른 화물 아래에 깔아 싣는다|던져서 빨리 싣는다|표시를 무시한다|파손 주의 화물은 특히 충격을 피합니다.
+운행 전 적재함 문에 대해 해야 할 일은?|문이 확실히 잠겼는지 확인한다|문을 열어 둔다|문은 확인할 필요 없다|문을 끈으로만 묶어 둔다|문이 열리면 화물이 떨어집니다.
+화물 분실을 막기 위한 방법으로 옳은 것은?|인수·인계할 때 수량을 확인하고 서명을 받는다|확인 없이 전달한다|운송장을 버린다|수량은 대충 센다|확인과 서명이 분실·분쟁을 막습니다.
+화물자동차에 사람을 화물과 함께 적재함에 태우는 것에 대한 설명은?|적재함에 사람을 태우면 안 된다|가까운 거리는 태워도 된다|화물을 잡고 있게 태운다|짐이 적으면 태워도 된다|적재함 탑승은 추락 위험이 큽니다.
+`,V:`
+물류의 뜻으로 가장 알맞은 것은?|재화가 공급자에게서 소비자에게 이동하는 과정의 운송·보관·하역·포장 등의 활동|물건을 생산하는 활동|물건을 판매만 하는 활동|광고하는 활동|물류는 물건의 흐름을 관리하는 활동입니다.
+물류의 기능이 아닌 것은?|생산|운송|보관|하역|물류 기능은 운송·보관·하역·포장·정보·유통가공입니다.
+'제3자 물류'의 뜻으로 옳은 것은?|물류 활동을 외부의 전문 물류업체에 맡기는 것|회사가 직접 물류를 하는 것|자회사가 물류를 하는 것|소비자가 직접 가져가는 것|3PL은 외부 전문업체 위탁입니다.
+'제1자 물류'의 뜻으로 옳은 것은?|기업이 사내에 물류 조직을 두고 직접 물류를 하는 것|외부 업체에 맡기는 것|자회사에 맡기는 것|정부가 물류를 하는 것|자회사에 맡기면 제2자 물류입니다.
+물류의 7R 원칙에 해당하지 않는 것은?|Right Promotion(적절한 홍보)|Right Time(적절한 시간)|Right Place(적절한 장소)|Right Price(적절한 가격)|7R은 상품·양·품질·시간·장소·인상·가격입니다.
+'JIT(Just In Time)'의 뜻으로 옳은 것은?|필요한 물품을 필요한 때 필요한 양만큼 공급하는 것|물품을 미리 많이 쌓아 두는 것|가장 싼 운송 수단을 쓰는 것|밤에만 배송하는 것|재고를 줄이는 방식입니다.
+'공급망관리(SCM)'의 뜻으로 옳은 것은?|원재료 공급부터 최종 소비자까지 전체 흐름을 통합 관리하는 것|창고만 관리하는 것|운전자만 관리하는 것|판매점만 관리하는 것|공급망 전체를 하나로 관리합니다.
+화물자동차 운송의 장점으로 옳은 것은?|문전에서 문전까지(Door to Door) 운송할 수 있다|대량 화물의 장거리 운송비가 가장 싸다|날씨의 영향을 받지 않는다|환경오염이 가장 적다|기동성과 문전 운송이 가장 큰 장점입니다.
+화물자동차 운송의 단점으로 옳은 것은?|대량 화물을 장거리 운송할 때는 비효율적이다|문전 운송이 어렵다|소량 화물을 운송할 수 없다|기동성이 떨어진다|대량·장거리는 철도·해운이 유리합니다.
+고객의 불만을 처리하는 방법으로 옳은 것은?|고객의 말을 끝까지 듣고 사과한 뒤 신속히 처리한다|먼저 변명한다|고객과 논쟁한다|회사 탓으로 돌린다|경청-사과-신속 처리가 기본입니다.
+고객만족의 뜻으로 알맞은 것은?|고객이 기대하는 수준 이상의 서비스를 제공해 만족하게 하는 것|가격만 낮추는 것|회사 규칙만 지키는 것|빠르게만 하는 것|기대 이상을 주는 것이 고객만족입니다.
+직업 운전자의 기본 자세로 옳은 것은?|교통법규를 지키고 양보·배려하는 운전을 한다|빨리 가기 위해 신호를 무시한다|다른 차와 경쟁한다|피곤해도 쉬지 않는다|안전과 배려가 직업 운전자의 기본입니다.
+운전자의 용모와 복장으로 바람직한 것은?|단정하고 청결하게 한다|편하면 아무렇게나 입는다|슬리퍼를 신는다|모자를 눌러써 얼굴을 가린다|용모는 고객에게 주는 첫인상입니다.
+고객을 응대하는 태도로 바람직한 것은?|밝은 표정으로 먼저 인사하고 존댓말을 쓴다|무표정하게 물건만 건넨다|반말을 쓴다|바쁘다고 대꾸하지 않는다|친절한 응대가 회사의 신뢰를 만듭니다.
+택배 배송 중 고객이 집에 없을 때 올바른 방법은?|부재중 안내를 남기고 고객에게 연락한다|아무 데나 두고 간다|그냥 다시 가져가 연락하지 않는다|이웃에게 말없이 맡긴다|고객에게 알리고 처리 방법을 정해야 합니다.
+고객의 욕구로 보기 어려운 것은?|무시당하고 싶어 한다|기억되기를 바란다|환영받고 싶어 한다|중요한 사람으로 인식되기를 바란다|고객은 존중받고 싶어 합니다.
+직업 운전자에게 바람직하지 않은 운전 행동은?|차로를 자주 바꾸며 끼어든다|양보 운전|교통법규 준수|적절한 휴식|잦은 차로 변경은 사고 원인입니다.
+물류에서 '하역'의 뜻으로 옳은 것은?|화물을 싣고 내리는 작업|화물을 보관하는 작업|화물을 생산하는 작업|화물을 광고하는 작업|하역은 싣고 내리는 일입니다.
+물류에서 '보관' 기능이 만드는 효용은?|시간적 효용|장소적 효용|형태적 효용|소유적 효용|보관은 시간적 효용, 운송은 장소적 효용을 만듭니다.
+물류에서 '운송' 기능이 만드는 효용은?|장소적 효용|시간적 효용|형태적 효용|정보적 효용|물건을 필요한 곳으로 옮겨 가치를 만듭니다.
+'유통가공'의 설명으로 옳은 것은?|유통 과정에서 절단·라벨 부착 등 간단한 가공을 하는 것|공장에서 제품을 처음 만드는 것|화물을 보관하는 것|화물을 운송하는 것|유통 단계에서 하는 간단한 가공입니다.
+화물차의 위치를 실시간으로 파악하는 데 주로 쓰는 기술은?|GPS(위성항법장치)|바코드|팩스|무전기만 사용|GPS로 차량 위치를 실시간 추적합니다.
+'공동배송'의 장점으로 옳은 것은?|차량 적재 효율이 높아지고 물류비가 줄어든다|물류비가 늘어난다|교통 혼잡이 심해진다|배송 시간이 무조건 길어진다|여러 회사 화물을 함께 실어 효율을 높입니다.
+'택배'의 설명으로 옳은 것은?|소형·소량 화물을 문전에서 문전까지 배송하는 서비스|대형 화물만 운송하는 서비스|항구 사이 운송 서비스|창고 보관 서비스|택배는 소화물 문전 배송입니다.
+약속한 배송 시간을 지키지 못할 것 같을 때 올바른 행동은?|미리 고객에게 연락해 사정을 알린다|연락 없이 늦게 간다|배송을 포기한다|다음 날 말없이 간다|미리 알리는 것이 신뢰를 지킵니다.
+직업 운전자가 가져야 할 직업관으로 바람직한 것은?|자신의 직업에 긍지와 사명감을 갖는다|돈만 벌면 된다고 생각한다|남의 일처럼 생각한다|안전은 회사 책임이라고 생각한다|긍지와 사명감이 안전운행으로 이어집니다.
+화물 사고로 고객 클레임이 생겼을 때 올바른 대응은?|책임을 회피하지 않고 회사 절차에 따라 처리한다|모른 척한다|고객 탓을 한다|개인적으로 몰래 합의한다|정해진 절차로 빠르고 정직하게 처리합니다.
+물류비를 줄이는 방법으로 옳은 것은?|빈 차로 운행하는 공차 운행을 줄인다|빈 차 운행을 늘린다|적재율을 낮춘다|경로를 일부러 돌아간다|공차율을 낮추면 물류비가 줄어듭니다.
+연료를 아끼는 경제운전 방법으로 옳은 것은?|급출발·급가속·급제동을 피하고 일정한 속도로 달린다|급가속을 자주 한다|공회전을 오래 한다|타이어 공기압을 낮춘다|부드럽게 정속 주행하면 연료가 절약됩니다.
+고객의 물건을 다루는 태도로 옳은 것은?|내 물건처럼 소중히 다룬다|빨리 끝내려고 던진다|포장이 튼튼하면 막 다룬다|무거운 것은 끌고 간다|고객의 화물은 고객의 재산입니다.
+`};
+const LINK='https://claude.ai/artifact/9YdDgUVfG5ykZHgj1MAM8H';
+const POOL=[];
+for(const s of SUBJ){RAW[s.k].trim().split('\n').forEach((line,i)=>{const p=line.split('|').map(x=>x.trim());if(p.length<6)return;POOL.push({id:s.k+(i+1),sub:s.k,q:p[0],a:p[1],w:[p[2],p[3],p[4]],ex:p[5]})})}
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+let timers=[],rafId=0,tick=null,exam=null,apt=null;
+const later=(f,ms)=>{timers.push(setTimeout(f,ms))};
+function clearAll(){timers.forEach(clearTimeout);timers=[];cancelAnimationFrame(rafId);if(tick){clearInterval(tick);tick=null}}
+function view(html){clearAll();app.innerHTML=html;window.scrollTo(0,0)}
+
+/* ---------- HOME ---------- */
+function home(){
+  const ap=store.get('apt',null),hist=store.get('hist',[]),cur=store.get('cur',null);
+  const passed=ap&&ap.pass;
+  const cnt=SUBJ.map(s=>s.s+' '+POOL.filter(q=>q.sub===s.k).length).join(' · ');
+  view(`<header class="plate"><div class="in"><span class="badge">화물 80문제</span><h1>화물운송종사 모의고사</h1><p>적성검사 연습을 통과하면 필기 모의고사가 열려요.</p></div></header>
+  <div class="wrap">
+  <section class="card"><span class="st ${passed?'ok':'no'}">${passed?'통과':'미통과'}</span><h2>1단계 · 운전적성정밀검사 연습</h2>
+  <p>속도예측, 정지거리예측, 주의전환, 반응조절, 변화탐지 5가지. 5개 중 3개 이상 50점을 넘기면 통과예요.</p>
+  ${ap?`<p>지난 결과: ${ap.scores.map((v,i)=>APT[i].n+' '+Math.round(v)).join(' · ')}</p>`:''}
+  <button class="${passed?'ghost':'yb'} full" data-act="apt">${passed?'적성검사 다시 연습하기':'적성검사 시작'}</button></section>
+  <section class="card"><span class="st ${passed?'ok':'no'}">${passed?'열림':'잠김'}</span><h2>2단계 · 필기 모의고사</h2>
+  <p>80문제 · 80분 · 48문제 이상 맞히면 합격. 문제은행 ${POOL.length}문제(${cnt})에서 매번 새로 뽑고, 덜 푼 문제부터 나와요.</p>
+  ${cur&&passed?'<button class="yb full" data-act="resume" style="margin-bottom:10px">풀던 시험 이어서 풀기</button>':''}
+  <button class="${passed?'pri':''} full" data-act="exam" ${passed?'':'disabled'}>${passed?'새 모의고사 시작':'적성검사를 먼저 통과하세요'}</button></section>
+  ${hist.length?`<section class="card"><h2>내 기록</h2><ul class="hist">${hist.slice(-10).reverse().map(h=>`<li><span>${esc(h.d)}</span><div class="meter"><i class="${h.pass?'ok':'bad'}" style="width:${h.score/80*100}%"></i></div><span>${h.score}/80 ${h.pass?'<b class="r">합격</b>':'<b class="x">불합격</b>'}</span></li>`).join('')}</ul></section>`:''}
+  <p class="note">문제는 실제 출제 범위를 바탕으로 만든 연습문제예요. 실제 기출문제를 그대로 옮긴 것은 아니에요. 적성검사도 실제 검사기와 방식이 비슷한 연습용이고, 실제 판정과는 달라요. 기록은 이 기기의 브라우저에만 저장돼요.</p>
+  </div>`);
+}
+
+/* ---------- APTITUDE ---------- */
+const APT=[
+ {n:'속도예측',d:'트럭이 일정한 속도로 오다가 터널 속으로 사라져요. 트럭이 빨간 ▼ 표시(터널 끝)에 닿았다고 생각할 때 "지금!"을 누르세요. 터널에 들어가기 전에 누르면 0점이에요.',run:speedTest},
+ {n:'정지거리예측',d:'트럭이 달려와요. "브레이크"를 누르면 미끄러지면서 서서히 멈춰요. 트럭 앞부분이 빨간 정지선에 딱 맞게 멈추도록 미리 누르세요. 한 번만 누를 수 있어요.',run:stopTest},
+ {n:'주의전환',d:'칸 하나에 # 표시가 잠깐 나타난 뒤 화살표가 나와요. 보통 # 자리에 나오지만 다른 칸에 나올 때도 있어요. 화살표 방향대로 왼쪽/오른쪽 버튼을 최대한 빨리 누르세요.',run:switchTest},
+ {n:'반응조절',d:'화면 왼쪽이나 오른쪽에 빨간 원 또는 초록 원이 나와요. 위치는 신경 쓰지 말고 색깔에 맞는 버튼(빨강/초록)을 최대한 빨리 누르세요.',run:colorTest},
+ {n:'변화탐지',d:'도형 몇 개가 잠깐 보였다가 사라지고 다시 나타나요. 처음과 비교해서 모양이나 색이 하나라도 바뀌었으면 "다르다", 그대로면 "같다"를 누르세요.',run:changeTest}
+];
+function aptStart(){apt={i:0,scores:[]};aptIntro()}
+function aptIntro(){
+  const t=APT[apt.i];
+  view(`<div class="bar"><span class="time">적성검사 ${apt.i+1}/5</span><button class="ghost sm" data-act="home">그만하기</button></div>
+  <div class="wrap"><span class="chip">${esc(t.n)}검사</span><h2 style="font-size:26px;line-height:1.2;margin:4px 0 10px">${esc(t.n)}검사</h2><p>${esc(t.d)}</p>
+  <button class="yb full" data-act="aptgo" style="margin-top:14px">시작하기</button></div>`);
+}
+function aptRun(){
+  const t=APT[apt.i];
+  view(`<div class="bar"><span class="time">${esc(t.n)}</span><span id="prog"></span><button class="ghost sm" data-act="home">그만</button></div><div class="wrap" id="tw"></div>`);
+  t.run(document.getElementById('tw'),score=>{apt.scores.push(clamp(score,0,100));apt.i++;apt.i<APT.length?aptMid(score):aptResult()});
+}
+function aptMid(score){
+  const t=APT[apt.i-1];
+  view(`<div class="wrap" style="padding-top:40px"><p>${esc(t.n)}검사 결과</p><div class="big">${Math.round(score)}점</div><p class="${score>=50?'r':'x'}">${score>=50?'적합':'부적합'}</p><button class="pri full" data-act="aptnext" style="margin-top:20px">다음 검사</button></div>`);
+}
+function aptResult(){
+  const ok=apt.scores.filter(v=>v>=50).length,pass=ok>=3;
+  store.set('apt',{pass:pass||!!(store.get('apt',{}).pass),scores:apt.scores,last:pass});
+  view(`<header class="plate"><div class="in"><span class="badge">적성검사 결과</span><h1>${pass?'통과했어요':'아쉽게 통과하지 못했어요'}</h1><p>5개 중 ${ok}개 적합 (3개 이상이면 통과)</p></div></header>
+  <div class="wrap"><table><thead><tr><th>검사</th><th>점수</th><th>판정</th></tr></thead><tbody>${apt.scores.map((v,i)=>`<tr><td>${APT[i].n}</td><td>${Math.round(v)}점</td><td class="${v>=50?'r':'x'}">${v>=50?'적합':'부적합'}</td></tr>`).join('')}</tbody></table>
+  <div class="row" style="margin-top:18px">${pass?'<button class="yb" data-act="exam">필기 모의고사 시작</button>':''}<button class="${pass?'ghost':'yb'}" data-act="apt">다시 하기</button></div>
+  <button class="ghost full" data-act="home" style="margin-top:10px">처음으로</button></div>`);
+}
+function setProg(a,b){const p=document.getElementById('prog');if(p)p.textContent=a+'/'+b}
+
+function speedTest(el,done){
+  const N=6,sc=[];let t=0;
+  el.innerHTML=`<div class="stage" id="stg"><div class="road"></div><div class="tunnel"></div><div class="mark">▼</div><div class="truck" id="trk"></div></div><p class="hint" id="hint">준비…</p><button class="hit pri full" id="hit">지금!</button>`;
+  const stg=el.querySelector('#stg'),trk=el.querySelector('#trk'),hint=el.querySelector('#hint'),hit=el.querySelector('#hit');
+  let st={};
+  function next(){
+    if(t>=N)return done(avg(sc));
+    setProg(t+1,N);hint.textContent='트럭을 잘 보세요';
+    const W=stg.clientWidth,v=W*(0.16+Math.random()*0.2),x0=-50;
+    st={W,v,x0,enter:(W*0.45-44-x0)/v,target:(W*0.85-22-x0)/v,t0:performance.now(),on:true};
+    trk.style.transform=`translateX(${x0}px)`;
+    const loop=now=>{const s=(now-st.t0)/1000;trk.style.transform=`translateX(${x0+v*s}px)`;
+      if(st.on&&s>st.target+(st.target-st.enter)*1.2){finish(null)}
+      if(x0+v*s<W+60)rafId=requestAnimationFrame(loop)};
+    rafId=requestAnimationFrame(loop);
+  }
+  function finish(s){
+    if(!st.on)return;st.on=false;let p;
+    if(s===null){p=0;hint.innerHTML='<span class="x">시간 초과</span>'}
+    else if(s<st.enter){p=0;hint.innerHTML='<span class="x">너무 빨리 눌렀어요</span>'}
+    else{const d=s-st.target;p=clamp(100-200*Math.abs(d)/(st.target-st.enter),0,100);hint.innerHTML=`${Math.abs(d).toFixed(2)}초 ${d<0?'빠름':'늦음'} · <b>${Math.round(p)}점</b>`}
+    sc.push(p);t++;later(()=>{cancelAnimationFrame(rafId);next()},1400);
+  }
+  hit.onclick=()=>{if(st.on)finish((performance.now()-st.t0)/1000)};
+  later(next,700);
+}
+function stopTest(el,done){
+  const N=6,sc=[];let t=0;
+  el.innerHTML=`<div class="stage" id="stg"><div class="road"></div><div class="stopl"></div><div class="truck" id="trk"></div></div><p class="hint" id="hint">준비…</p><button class="hit pri full" id="hit">브레이크</button>`;
+  const stg=el.querySelector('#stg'),trk=el.querySelector('#trk'),hint=el.querySelector('#hint'),hit=el.querySelector('#hit');
+  let st={};
+  function next(){
+    if(t>=N)return done(avg(sc));
+    setProg(t+1,N);hint.textContent='정지선에 맞춰 멈추세요';
+    const W=stg.clientWidth,v=W*(0.25+Math.random()*0.2),a=0.30625*W;
+    st={W,v,a,x:-50,vel:v,brake:false,on:true,last:performance.now(),line:W*0.8};
+    const loop=now=>{const dt=Math.min(0.05,(now-st.last)/1000);st.last=now;
+      if(st.brake){st.vel=Math.max(0,st.vel-st.a*dt)}
+      st.x+=st.vel*dt;trk.style.transform=`translateX(${st.x}px)`;
+      if(st.brake&&st.vel===0){return finish()}
+      if(!st.brake&&st.x+44>st.line+W*0.15){return finish(true)}
+      rafId=requestAnimationFrame(loop)};
+    rafId=requestAnimationFrame(loop);
+  }
+  function finish(miss){
+    if(!st.on)return;st.on=false;let p;
+    if(miss){p=0;hint.innerHTML='<span class="x">브레이크를 안 밟았어요</span>'}
+    else{const e=(st.x+44-st.line)/st.W;p=clamp(100-Math.abs(e)/0.12*100,0,100);hint.innerHTML=`${e<0?'정지선 앞':'정지선 넘음'} · <b>${Math.round(p)}점</b>`}
+    sc.push(p);t++;later(next,1500);
+  }
+  hit.onclick=()=>{if(st.on&&!st.brake){st.brake=true;hint.textContent='제동 중…'}};
+  later(next,700);
+}
+function rtTest(el,done,opt){
+  const N=14,sc=[];let t=0,st={};
+  el.innerHTML=opt.html+`<p class="hint" id="hint"></p><div class="duo"><button id="b0" class="${opt.c0}">${opt.l0}</button><button id="b1" class="${opt.c1}">${opt.l1}</button></div>`;
+  const hint=el.querySelector('#hint');
+  function next(){
+    if(t>=N)return done(avg(sc));
+    setProg(t+1,N);opt.clear(el);st={on:false};
+    later(()=>{opt.pre(el,st);later(()=>{opt.show(el,st);st.t0=performance.now();st.on=true;later(()=>{if(st.on)res(-1)},2200)},opt.preMs)},500+Math.random()*500);
+  }
+  function res(b){
+    if(!st.on)return;st.on=false;let p=0;const rt=performance.now()-st.t0;
+    if(b===-1)hint.innerHTML='<span class="x">시간 초과</span>';
+    else if(b!==st.ans)hint.innerHTML='<span class="x">틀렸어요</span>';
+    else{p=clamp(100-(rt-450)/opt.k,0,100);hint.innerHTML=`${Math.round(rt)}ms · <b>${Math.round(p)}점</b>`}
+    sc.push(p);t++;opt.clear(el);later(next,700);
+  }
+  el.querySelector('#b0').onclick=()=>res(0);el.querySelector('#b1').onclick=()=>res(1);
+  later(next,500);
+}
+function switchTest(el,done){
+  rtTest(el,done,{html:`<div class="cells">${Array.from({length:8},(_,i)=>`<div class="cell" id="c${i}"></div>`).join('')}</div>`,l0:'◀ 왼쪽',l1:'오른쪽 ▶',c0:'pri',c1:'pri',k:7,preMs:450,
+   clear(el){for(let i=0;i<8;i++){const c=el.querySelector('#c'+i);c.textContent='';c.classList.remove('cue')}},
+   pre(el,st){st.cue=Math.random()*8|0;const c=el.querySelector('#c'+st.cue);c.textContent='#';c.classList.add('cue')},
+   show(el,st){let pos=st.cue;if(Math.random()<0.25){do{pos=Math.random()*8|0}while(pos===st.cue)}
+     this.clear(el);st.ans=Math.random()<0.5?0:1;el.querySelector('#c'+pos).textContent=st.ans?'→':'←'}});
+}
+function colorTest(el,done){
+  rtTest(el,done,{html:`<div class="stage" id="cs"></div>`,l0:'빨강',l1:'초록',c0:'',c1:'',k:9,preMs:300,
+   clear(el){el.querySelector('#cs').innerHTML='';el.querySelector('#b0').style.background='#d32f2f';el.querySelector('#b0').style.color='#fff';el.querySelector('#b1').style.background='#1b8a4b';el.querySelector('#b1').style.color='#fff'},
+   pre(){},
+   show(el,st){st.ans=Math.random()<0.5?0:1;const left=Math.random()<0.5;el.querySelector('#cs').innerHTML=`<div class="dot" style="left:${left?25:75}%;background:${st.ans?'#1b8a4b':'#d32f2f'}"></div>`}});
+}
+function changeTest(el,done){
+  const N=10,COL=['#d32f2f','#1f5fd6','#1b8a4b','#ffc800'],SH=['c','s','t'];let t=0,ok=0,st={};
+  el.innerHTML=`<div class="shapes" id="sg"></div><p class="hint" id="hint"></p><div class="duo"><button id="b0" class="pri">같다</button><button id="b1" class="pri">다르다</button></div>`;
+  const sg=el.querySelector('#sg'),hint=el.querySelector('#hint');
+  const draw=cells=>{sg.innerHTML=Array.from({length:9},(_,i)=>{const c=cells[i];return `<div class="sh">${c?`<i class="${c.s}" style="background:${c.c}"></i>`:''}</div>`}).join('')};
+  function next(){
+    if(t>=N)return done(clamp((ok/N-0.5)*200,0,100));
+    setProg(t+1,N);hint.textContent='잘 기억하세요';st={on:false};
+    const n=4+(Math.random()*3|0),pos=shuffle([0,1,2,3,4,5,6,7,8]).slice(0,n),cells={};
+    pos.forEach(p=>cells[p]={s:SH[Math.random()*3|0],c:COL[Math.random()*4|0]});
+    draw(cells);
+    later(()=>{draw({});hint.textContent='…';later(()=>{
+      st.ans=Math.random()<0.5?1:0;const c2=JSON.parse(JSON.stringify(cells));
+      if(st.ans){const p=pos[Math.random()*n|0];if(Math.random()<0.5){c2[p].s=SH[(SH.indexOf(c2[p].s)+1+(Math.random()*2|0))%3]}else{c2[p].c=COL[(COL.indexOf(c2[p].c)+1+(Math.random()*3|0))%4]}}
+      draw(c2);hint.textContent='처음과 같나요?';st.on=true},900)},1500);
+  }
+  function res(b){if(!st.on)return;st.on=false;const r=b===st.ans;if(r)ok++;hint.innerHTML=r?'<span class="r">정답</span>':'<span class="x">오답</span>';t++;later(next,900)}
+  el.querySelector('#b0').onclick=()=>res(0);el.querySelector('#b1').onclick=()=>res(1);
+  later(next,500);
+}
+
+/* ---------- EXAM ---------- */
+function newExam(){
+  const seen=store.get('seen',{});let items=[];
+  for(const s of SUBJ){items=items.concat(shuffle(POOL.filter(q=>q.sub===s.k)).sort((x,y)=>(seen[x.id]||0)-(seen[y.id]||0)).slice(0,s.c))}
+  return mk(items,'full',80);
+}
+function mk(items,mode,min){
+  items=items.map(q=>{const opts=shuffle([q.a,...q.w]);return {id:q.id,sub:q.sub,q:q.q,ex:q.ex,opts,ans:opts.indexOf(q.a)}});
+  return {items,pick:Array(items.length).fill(-1),cur:0,end:Date.now()+min*60000,mode};
+}
+function save(){if(exam&&exam.mode==='full')store.set('cur',exam)}
+function examView(){
+  const e=exam,q=e.items[e.cur],s=SUBJ.find(x=>x.k===q.sub),n=e.items.length,done=e.pick.filter(x=>x>=0).length;
+  clearAll();
+  app.innerHTML=`<div class="bar"><span class="time" id="time"></span><span>${done}/${n}</span><button class="ghost sm" data-act="grid">문제 목록</button></div>
+  <main class="exam"><span class="chip">${esc(s.s)}</span><h2 class="qn">${e.cur+1}. ${esc(q.q)}</h2>
+  <ol class="opts">${q.opts.map((o,i)=>`<li><button class="opt${e.pick[e.cur]===i?' on':''}" data-opt="${i}"><b>${'①②③④'[i]}</b><span>${esc(o)}</span></button></li>`).join('')}</ol></main>
+  <nav class="foot"><div class="row"><button class="ghost" data-act="prev" ${e.cur===0?'disabled':''}>이전</button>${e.cur<n-1?'<button class="pri" data-act="next">다음</button>':'<button class="yb" data-act="ask">답안 제출</button>'}</div></nav>`;
+  const tm=()=>{const left=Math.max(0,e.end-Date.now()),m=Math.floor(left/60000),sec=Math.floor(left/1000)%60,el=document.getElementById('time');
+    if(el){el.textContent=`남은 시간 ${m}:${String(sec).padStart(2,'0')}`;el.classList.toggle('low',left<300000)}
+    if(left<=0){submit()}};
+  tm();tick=setInterval(tm,1000);
+}
+function grid(){
+  const e=exam;let html='',last='';
+  e.items.forEach((q,i)=>{if(q.sub!==last){last=q.sub;html+=`<span class="sep">${esc(SUBJ.find(s=>s.k===q.sub).s)}</span>`}html+=`<button class="${e.pick[i]>=0?'a':''} ${i===e.cur?'c':''}" data-go="${i}">${i+1}</button>`});
+  modal(`<h3>문제 목록</h3><p class="note" style="margin:0">노란 칸은 답한 문제예요.</p><div class="nums">${html}</div><div class="row"><button class="ghost" data-act="close">닫기</button><button class="yb" data-act="ask">답안 제출</button></div>`);
+}
+function modal(h){const m=document.createElement('div');m.className='modal';m.id='modal';m.innerHTML=`<div class="sheet">${h}</div>`;document.body.appendChild(m)}
+function closeModal(){const m=document.getElementById('modal');if(m)m.remove()}
+function ask(){closeModal();const left=exam.pick.filter(x=>x<0).length;modal(`<h3>답안을 제출할까요?</h3><p>${left?`아직 안 푼 문제가 <b>${left}개</b> 있어요.`:'모든 문제에 답했어요.'} 제출하면 바로 채점돼요.</p><div class="row"><button class="ghost" data-act="close">계속 풀기</button><button class="yb" data-act="submit">제출</button></div>`)}
+function submit(){
+  closeModal();clearAll();const e=exam;
+  const per={};SUBJ.forEach(s=>per[s.k]={ok:0,n:0});let score=0;
+  e.items.forEach((q,i)=>{per[q.sub].n++;if(e.pick[i]===q.ans){per[q.sub].ok++;score++}});
+  const n=e.items.length,pass=score>=Math.ceil(n*0.6);
+  if(e.mode==='full'){
+    const seen=store.get('seen',{});e.items.forEach(q=>seen[q.id]=(seen[q.id]||0)+1);store.set('seen',seen);
+    const h=store.get('hist',[]);const d=new Date();h.push({d:`${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`,score,pass});store.set('hist',h.slice(-30));store.del('cur');
+  }
+  const wrong=e.items.map((q,i)=>({q,me:e.pick[i]})).filter(x=>x.me!==x.q.ans);
+  e.wrong=wrong.map(x=>x.q);
+  view(`<header class="plate"><div class="in"><span class="badge">${e.mode==='full'?'모의고사 결과':'오답 다시 풀기 결과'}</span><div class="big">${score}<span style="font-size:.45em"> / ${n}</span></div><h1 style="font-size:28px">${pass?'합격이에요!':'불합격이에요'}</h1><p>${e.mode==='full'?'48문제 이상 맞히면 합격':'60% 이상이면 통과'}</p></div></header>
+  <div class="wrap"><section class="card"><h2>과목별 점수</h2>${SUBJ.filter(s=>per[s.k].n).map(s=>`<div class="sub"><span>${esc(s.n)}</span><span>${per[s.k].ok}/${per[s.k].n}</span></div><div class="meter"><i style="width:${per[s.k].ok/per[s.k].n*100}%"></i></div>`).join('')}</section>
+  <div class="row">${wrong.length?'<button class="yb" data-act="retry">틀린 문제 다시 풀기</button>':''}<button class="pri" data-act="exam">새 모의고사</button></div>
+  <button class="ghost full" data-act="home" style="margin-top:10px">처음으로</button>
+  <section style="margin-top:22px"><h2 style="font-size:20px">${wrong.length?`틀린 문제 ${wrong.length}개 해설`:'모두 맞혔어요!'}</h2>
+  ${wrong.map(x=>`<div class="rv"><p class="q">${esc(x.q.q)}</p><p class="me" style="margin:0">내 답: ${x.me>=0?esc(x.q.opts[x.me]):'안 풂'}</p><p class="ans" style="margin:0">정답: ${esc(x.q.opts[x.q.ans])}</p><p class="ex">${esc(x.q.ex)}</p></div>`).join('')}</section></div>`);
+}
+
+/* ---------- EVENTS ---------- */
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('button');if(!b)return;
+  if(b.dataset.opt!==undefined&&exam){exam.pick[exam.cur]=+b.dataset.opt;save();for(const o of document.querySelectorAll('.opt'))o.classList.toggle('on',o===b);const n=exam.pick.filter(x=>x>=0).length;const sp=document.querySelector('.bar span:nth-child(2)');if(sp)sp.textContent=n+'/'+exam.items.length;return}
+  if(b.dataset.go!==undefined){exam.cur=+b.dataset.go;closeModal();save();examView();return}
+  const a=b.dataset.act;if(!a)return;
+  const ap=store.get('apt',null);
+  switch(a){
+    case 'home':closeModal();exam=null;home();break;
+    case 'apt':aptStart();break;
+    case 'aptgo':aptRun();break;
+    case 'aptnext':aptIntro();break;
+    case 'exam':if(!(ap&&ap.pass)){home();break}exam=newExam();save();examView();break;
+    case 'resume':exam=store.get('cur',null);if(exam){if(exam.end<Date.now())exam.end=Date.now()+60000;examView()}else home();break;
+    case 'retry':{const w=exam.wrong;exam=mk(w.map(q=>POOL.find(p=>p.id===q.id)),'retry',Math.max(5,w.length));examView();break}
+    case 'prev':exam.cur--;save();examView();break;
+    case 'next':exam.cur++;save();examView();break;
+    case 'grid':grid();break;
+    case 'close':closeModal();break;
+    case 'ask':ask();break;
+    case 'submit':submit();break;
+    case 'copy':{const done=t=>{b.textContent=t;setTimeout(()=>b.textContent='링크 복사',2000)};const fb=()=>{const ta=document.createElement('textarea');ta.value=LINK;document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();done(ok?'복사됐어요!':'위 링크를 길게 눌러 복사하세요')};try{navigator.clipboard.writeText(LINK).then(()=>done('복사됐어요!'),fb)}catch(e){fb()}break}
+  }
+});
+home();
+}
+</script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script></body></html>
